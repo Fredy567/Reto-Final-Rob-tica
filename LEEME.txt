@@ -1,0 +1,27 @@
+Parte F - carpetas listas para el repo capytown_G<n>
+==================================================
+Copiar csv/, plots/, config/ y bags/ al repo (mismas carpetas). sim_log.txt, sim_a.csv y
+rqt_graph.png van en la raiz (Parte A). parteF_resumen.txt es la base para el informe.
+
+Nombres:
+- exp1*_sim, exp2*_sim, exp3*_sim*  -> simulador (CSV del nodo, /odom)
+- exp3*_simreal*                    -> simulador, pose REAL de cierre_real.py (/sim/pose)
+  Se renombraron (en la Parte D se llamaban exp3b_real_run1, etc.) porque chocaban con
+  los archivos del robot real (por ejemplo exp3b_real_run3).
+- exp*_real*                        -> robot real
+- exp3b_real_run1/run2: CSV reconstruidos del bag (*_desde_bag.csv); el PNG usa el
+  nombre corto.
+
+Las graficas del robot y las del cuadrado del simulador se hicieron con un script propio
+con el mismo formato que 09_plot_csv.py (trayectoria + error o yaw), descartando las
+filas FIN. Si el profe pide el formato exacto, se regeneran con:
+  python3 09_plot_csv.py <csv> --experimento <recta|giro90|cuadrado> --lado 2.0
+
+Actualización 20/11:
+- exp3a_real_run1..4.csv + bags/rc1_real_3a_run1..4: cuadrado en lazo abierto del 19/11, con
+  cinta (87 / 41 / 45 / 33 cm). run2..4 se lanzaron como 3B, pero las órdenes grabadas
+  (v 0.20 fija, w 0.8 por tiempo) son de lazo abierto, así que se reportan como 3A.
+  Sus PNG muestran las órdenes v y w, porque el /odom de esa sesión era defectuoso.
+- exp3a_real_previo.*: el 3A de julio (sin cinta).
+- 3B: la serie de julio (exp3b_real_run1/2_desde_bag, exp3b_real_run3).
+- rqt_graph.png: versión nueva, con /cmd_vel, /odom, /sim/pose y cierre_real.

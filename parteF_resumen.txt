@@ -1,0 +1,66 @@
+PARTE F - Evidencia y comparacion simulador -> robot real (RC-1, grupo ROS_DOMAIN_ID 20)
+
+1. Que contiene esta entrega
+- plots/: un PNG por prueba (50): Partes B, C y D del simulador y Parte E del robot real.
+  Las del robot tienen abajo una franja con las ganancias y la medida a mano (cinta o
+  transportador). En las del cuadrado la trayectoria es la de /odom; la verdad terreno es
+  la cinta.
+- csv/hoja_resultados.csv: hoja completa (simulador + robot), columnas del Anexo E.
+- csv/tabla_transferencia.csv: misma ganancia/resultado en el sim y en el robot.
+- config/rc1_pid.yaml: ganancias finales en dos bloques (simulador y robot real).
+
+2. Tabla de transferencia (resumen)
+
+Prueba  | Simulador (ganancias -> resultado)                  | Robot real (ganancias -> resultado)
+Recta   | kp 3.0 ki 0.5 kd 4.0 -> error final 0.65 cm          | kp 2.4 ki 0.20 kd 0.30, v 0.10 -> cinta 2.5 cm (/odom 8.4 cm)
+Giro 90 | kp_yaw 6.0 kd_yaw 0.6 -> sobreimp. 0.27 %, t_as 1.0 s | mismas -> transportador 87/88/94/93 deg, error medio 3.0 deg, t_as 2-15 s
+3A      | lazo abierto -> REAL 20.5 cm (/odom 12.0)             | lazo abierto -> cinta 87/41/45/33 cm (prom. 51.5), 19/11
+3B      | kp 3/0/4, yaw 3/0/0.4 -> REAL 23.0 cm (/odom 0.4)     | kp 1.8/0.10/1.5, yaw 2.0/0.10/0.6 -> cinta 44.5 cm (/odom 10.7)
+
+3. Por que cambio el comportamiento al pasar al robot
+- Las ganancias no se pudieron copiar en la recta. Con kp 3, kd 4 el robot serpenteo
+  (~3 curvas antes de asentarse). El robot real tiene inercia y motores, y /odom llega a
+  ~11 Hz con retardo (en el simulador, 50 Hz y sin retardo). Kd alto amplifica ese ruido:
+  hubo que bajar Kd de 4.0 a 0.30 (re-sintonias: 5.0 -> 3.5 -> 2.5 cm con cinta).
+- En el giro, /odom marca casi siempre 89-91 deg, pero el transportador da 87-94 deg. El
+  derrape de las 4 ruedas al girar no existe en el simulador y /odom no lo ve: ninguna
+  ganancia corrige lo que el sensor no mide. La friccion ademas hace que el robot se
+  acomode a saltitos (t_as de hasta 15 s frente a 1 s en el simulador).
+- En el cuadrado, el PID deja a /odom cerca del inicio (7.7-14.6 cm), pero la cinta mide
+  41-47.5 cm. Es la misma idea de la Parte D (lo que /odom no ve no se corrige), pero mas
+  grande: la diferencia /odom vs. real pasa de ~22 cm en el simulador a ~34 cm en el
+  robot. Un error de 3-4 deg por giro, si se repite en el mismo sentido, da 29-38 cm de
+  cierre en un cuadrado de 2 m (calculo de la pregunta 3).
+- /odom tambien se equivoca en sentido contrario: en la recta final dice 8.4 cm de error
+  y la cinta mide 2.5 cm. Es error sistematico de odometria (r, b_eff), por eso la
+  calibracion del RC-0 sigue importando aunque el lazo se cierre sobre /odom.
+- Corrida fallida de 3B: el robot giro ~11 vueltas sobre si mismo (con ki_yaw 0.10). Se
+  registro como no terminada y para la corrida 3 se puso ki_yaw en 0.0. La causa exacta
+  no quedo confirmada (posible acumulacion del integral del giro o /odom inestable).
+
+4. Que cambiariamos para el RC-2
+- Fusionar el giroscopio de la IMU con /odom para el yaw: es el sensor que si ve el giro
+  real que causa el derrape.
+- Re-sintonizar el giro en el robot con transportador, no solo con /odom.
+- Medir siempre con cinta antes de mover el robot y grabar el bag de cada corrida.
+- Validar /odom antes de cada sesion (empujar 50 cm y girar 90 a mano) y revisar en el CSV
+  que el modo corrido sea el pedido (la "listo: <experimento>" que imprime el nodo).
+- Que el nodo publique velocidad cero antes de cerrar (con Ctrl+C no frenaba).
+
+5. Estado frente a la rubrica (Parte E) - revisar con el grupo
+- E5 giro90: CUMPLE. Error medio 3.0 deg, 3 de 4 corridas <= 3 deg.
+- E6 recta: cumple el desvio (5.0 / 3.5 / 2.5 cm, todas <= 5 cm), pero:
+  * solo 1 de las 3 tiene CSV (sint1 y sint2 no se encontraron);
+  * se midio con line_offset 0.0 y el enunciado pide 0.10.
+- E7 cuadrado: CUMPLE A MEDIAS.
+  * 3A: 4 corridas en lazo abierto el 19/11, con cinta y bag (87 / 41 / 45 / 33 cm, prom. 51.5).
+    Ojo: 3 de ellas se lanzaron como 3B pero el CSV y el bag muestran ordenes de lazo
+    abierto (v 0.20 fija, w 0.8 por tiempo): se reportan como 3A.
+  * 3B (serie de julio): cinta 41.0 / 47.5 / 45.0 cm, prom. 44.5 -> 14 % menor que 3A,
+    pero NO llega a la meta de <= 25 cm.
+  * 3B run3 uso otro ki_yaw y no tiene bag; los 3A y 3B se hicieron en sesiones distintas.
+  * El 19/11 el bringup usado publico un /odom defectuoso (no registraba giros: 3A marco
+    ~950 cm y 0.5 deg); por eso esa sesion se reporta solo con cinta.
+- E8 evidencia y transferencia: cubierto con esta entrega.
+- Hoja: las predicciones de 1A-1D dicen "FALTA". Deben ser las que el grupo escribio
+  antes de correr (no se inventan).
